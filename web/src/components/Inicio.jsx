@@ -35,8 +35,6 @@ export default function Inicio({ onFotos, onVideo }) {
         onChange={(e) => e.target.files?.length && onFotos(e.target.files)} />
       <input ref={video} data-testid="input-video" type="file" accept="video/*" className="hidden"
         onChange={(e) => e.target.files?.[0] && onVideo(e.target.files[0])} />
-
-      <div className="text-xs tracking-widest text-muted">──────── [ tudo fica só no seu pc ] ────────</div>
     </div>
   )
 }

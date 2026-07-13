@@ -13,16 +13,17 @@ reconstruction, runs on the **Windows engine that you download and run
 yourself**. Your photos are read by that engine on your own machine and never
 leave it. No upload.
 
-```
-BROWSER (the site)                     ENGINE (local Windows app, system tray)
-  drop photos / a video    ──photos──▶  COLMAP (SfM) → OpenMVS (dense/mesh/texture)
-  pick a look              ◀─status──   → decimate + auto-retopo → bake texture
-  3D viewer (three.js)     ◀──.glb───   → export .glb / .obj
-        everything over 127.0.0.1, no server in between
-```
+What the engine does with your photos, step by step:
 
-The site finds the engine on its own (`127.0.0.1`). If the engine isn't
-running, the site still opens, it just works as a showcase until you launch it.
+1. **COLMAP** works out where each photo was taken (structure-from-motion).
+2. **OpenMVS** turns that into a dense point cloud, then a mesh, then a texture.
+3. The mesh gets **decimated and auto-retopo'd** down to low poly, and the detail
+   is **baked** back into the texture.
+4. You get a `.glb` to spin in the browser and download as `.glb` or `.obj`.
+
+The browser and the engine only ever talk over `127.0.0.1`. The site finds the
+engine on its own; if it isn't running, the site still opens and just works as a
+showcase until you launch it.
 
 ## How to use it
 
