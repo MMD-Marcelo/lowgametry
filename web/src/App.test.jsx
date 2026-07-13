@@ -95,9 +95,13 @@ test('job que sumiu do motor durante o polling volta para o início', async () =
   const naoExiste = Object.assign(new Error('status 404'), { status: 404 })
   motor.statusJob.mockRejectedValue(naoExiste)
   render(<App />)
-  // entra no progresso pelo /health, e o 404 do polling devolve pro início
-  await waitFor(() => expect(screen.getByTestId('input-fotos')).toBeInTheDocument())
-  expect(localStorage.getItem('lowgametry.jobId')).toBeNull()
+  // entra no progresso pelo /health; o 404 do polling devolve pro início e limpa o job.
+  // input-fotos ja existe desde o primeiro render (tela inicial), entao espera o polling
+  // rodar (statusJob chamado) e o estado assentar em null — senao ha uma janela onde o
+  // /health setou o jobId mas o 404 ainda nao o limpou (flaky sob carga no CI).
+  await waitFor(() => expect(motor.statusJob).toHaveBeenCalled())
+  await waitFor(() => expect(localStorage.getItem('lowgametry.jobId')).toBeNull())
+  expect(screen.getByTestId('input-fotos')).toBeInTheDocument()
 })
 
 // dropzone -> organizador -> config, deixando na tela de config
