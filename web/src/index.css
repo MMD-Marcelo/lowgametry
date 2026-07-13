@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Chakra Petch — geométrica quadrada (SIL OFL), no espírito da fonte do logo */
+@font-face {
+  font-family: 'Chakra Petch';
+  src: url('./assets/fonts/ChakraPetch-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #121212;
+  color: #d6e8e0;
+  font-family: 'Chakra Petch', ui-monospace, monospace;
+}
+
+/* facetas de fundo animadas (SVG inline via FacetasFundo) */
+#facetas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.28;
+}
+
+/* scanner coreografado: cada quadrado tem um pico curto no início do seu ciclo;
+   o animation-delay (calculado por linha/direção/posição no FacetasFundo) faz a
+   banda percorrer a linha 1 (desce), depois a 2 (sobe), 3 (desce), 4 (sobe). O
+   ciclo (8s) casa com CICLO no componente. */
+@keyframes faceta-scan {
+  0%   { opacity: calc(var(--op) * 1.7); }
+  7%   { opacity: calc(var(--op) * 0.4); }
+  100% { opacity: calc(var(--op) * 0.4); }
+}
+.facetas-pulso {
+  opacity: var(--op);
+  animation: faceta-scan 8s linear infinite;
+}
+
+/* deriva bem suave do conjunto (respiração leve) */
+@keyframes faceta-deriva {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+.facetas-deriva {
+  animation: faceta-deriva 26s ease-in-out infinite;
+}
+
+/* scanlines: leve filtro geral na tela toda (sutil, sem listrar as fotos) */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0) 0px,
+    rgba(0,0,0,0) 2px,
+    rgba(0,0,0,0.08) 3px
+  );
+}
+
+/* glow removido — o visual vem da cor e das molduras, sem brilho de fósforo */
+.glow {}
+.glow-box {}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

@@ -1,0 +1,115 @@
+name: release-motor
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  BLENDER_URL: https://download.blender.org/release/Blender4.2/blender-4.2.9-windows-x64.zip
+  COLMAP_CPU_URL: https://github.com/colmap/colmap/releases/download/3.11.1/colmap-x64-windows-nocuda.zip
+  COLMAP_CUDA_URL: https://github.com/colmap/colmap/releases/download/3.11.1/colmap-x64-windows-cuda.zip
+  # v2.4.0 e a versao validada ponta a ponta em dev; nao baixar outra sem retestar.
+  # Build de CPU: roda em qualquer PC. Existe tambem OpenMVS_Windows_x64_CUDA.7z.
+  OPENMVS_URL: https://github.com/cdcseacave/openMVS/releases/download/v2.4.0/OpenMVS_Windows_x64.zip
+
+jobs:
+  motor:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: engine/go.sum
+
+      - name: testes do motor
+        working-directory: engine
+        run: |
+          go vet ./...
+          go test ./...
+
+      # -H=windowsgui: sem console; o motor mostra só a janela de controle
+      - name: compilar o motor
+        working-directory: engine
+        run: go build -ldflags "-H=windowsgui -s -w" -o "${{ github.workspace }}/pacote/lowgametry-engine.exe" .
+
+      - name: baixar as ferramentas de terceiros
+        run: |
+          New-Item -ItemType Directory -Force baixados | Out-Null
+          Invoke-WebRequest $env:BLENDER_URL     -OutFile baixados/blender.zip
+          Invoke-WebRequest $env:COLMAP_CPU_URL  -OutFile baixados/colmap-cpu.zip
+          Invoke-WebRequest $env:COLMAP_CUDA_URL -OutFile baixados/colmap-cuda.zip
+          Invoke-WebRequest $env:OPENMVS_URL     -OutFile baixados/openmvs.zip
+
+      # Cada zip traz uma pasta-raiz com nome versionado. Em vez de fixar esse
+      # nome, achamos a pasta que contém o executável esperado e movemos ela.
+      - name: montar ferramentas/
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force pacote/ferramentas | Out-Null
+
+          function Instalar($extraidoEm, $executavel, $destino) {
+            $exe = Get-ChildItem -Path $extraidoEm -Filter $executavel -Recurse -File | Select-Object -First 1
+            if (-not $exe) { throw "nao achei $executavel em $extraidoEm" }
+            # bin/colmap.exe -> a raiz é o pai de bin/; blender.exe -> a própria pasta
+            $raiz = if ($exe.Directory.Name -eq 'bin') { $exe.Directory.Parent } else { $exe.Directory }
+            Move-Item $raiz.FullName "pacote/ferramentas/$destino"
+          }
+
+          Expand-Archive baixados/blender.zip     -DestinationPath cru/blender
+          Expand-Archive baixados/colmap-cpu.zip  -DestinationPath cru/colmap-cpu
+          Expand-Archive baixados/colmap-cuda.zip -DestinationPath cru/colmap-cuda
+          Expand-Archive baixados/openmvs.zip     -DestinationPath cru/openmvs
+
+          Instalar cru/blender    'blender.exe'             'blender'
+          Instalar cru/colmap-cpu 'colmap.exe'              'colmap'
+          Instalar cru/colmap-cuda 'colmap.exe'             'colmap-cuda'
+          Instalar cru/openmvs    'DensifyPointCloud.exe'   'openmvs'
+
+      # O motor recusa o pipeline real se faltar qualquer um destes.
+      - name: conferir o pacote
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exigidos = @(
+            'pacote/lowgametry-engine.exe',
+            'pacote/ferramentas/colmap/bin/colmap.exe',
+            'pacote/ferramentas/colmap-cuda/bin/colmap.exe',
+            'pacote/ferramentas/blender/blender.exe',
+            'pacote/ferramentas/openmvs/DensifyPointCloud.exe',
+            'pacote/ferramentas/openmvs/ReconstructMesh.exe',
+            'pacote/ferramentas/openmvs/TextureMesh.exe',
+            'pacote/ferramentas/openmvs/InterfaceCOLMAP.exe'
+          )
+          foreach ($p in $exigidos) {
+            if (-not (Test-Path $p)) { throw "faltou no pacote: $p" }
+          }
+
+      - name: licencas e leiame
+        run: |
+          Copy-Item engine/README.md pacote/LEIAME-motor.md
+          Get-ChildItem pacote/ferramentas -Include 'LICENSE*','COPYING*' -Recurse -File |
+            ForEach-Object {
+              $tool = $_.FullName.Split([IO.Path]::DirectorySeparatorChar) |
+                Select-Object -Skip 2 -First 1
+              New-Item -ItemType Directory -Force pacote/licencas | Out-Null
+              Copy-Item $_.FullName "pacote/licencas/$tool-$($_.Name)"
+            }
+
+      - name: zipar
+        run: Compress-Archive -Path pacote/* -DestinationPath lowgametry-motor-windows-x64.zip
+
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: lowgametry-motor-windows-x64.zip
+          body: |
+            Motor Windows x64 do lowgametry. Descompacte e rode `lowgametry-engine.exe`
+            — abre a janela do motor; clique em "Ligar motor" e o site em
+            https://mmd-marcelo.github.io/lowgametry/ detecta sozinho. Fechar a janela encerra.
+
+            Inclui COLMAP (CPU e CUDA), OpenMVS e Blender. As fotos não saem do seu PC.

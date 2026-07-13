@@ -1,0 +1,39 @@
+﻿# deps / build
+node_modules/
+web/dist/
+web/node_modules/
+dist/
+
+# Go / motor
+engine/lowgametry-engine
+engine/lowgametry-engine.exe
+engine/*.exe
+*.test
+
+# binÃ¡rios de terceiros empacotados (baixados/extraÃ­dos, nÃ£o versionar crus)
+# ficam ao lado do .exe (engine/vendor) em dev e no release
+ferramentas/
+engine/ferramentas/
+
+# temporÃ¡rios de jobs
+tmp/
+.gocache/
+engine/trabalhos/
+*.log
+*.err
+
+# SO / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# dados de teste local (fotos + reconstrucoes)
+_teste/
+
+# docs internos de planejamento (IA/superpowers) e contrato de config.
+# fora do repo publico; so docs/captura.md fica.
+docs/config.md
+docs/superpowers/
+.superpowers/
+CLAUDE.md
+.claude/
