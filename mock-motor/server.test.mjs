@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-// encurta a evolução do job (padrão de 4s é só pra UX do dev) pra não estourar o
-// timeout do teste sob carga no CI. Definido antes de iniciar() no beforeAll.
-process.env.LOWGAMETRY_MOCK_DUR_MS = '150'
 import { iniciar } from './server.mjs'
 
 let motor
-beforeAll(async () => { motor = await iniciar(8799) })
-afterAll(async () => { await motor.fechar() })
+beforeAll(async () => {
+  // encurta a evolução do job (padrão de 4s é só pra UX do dev). Setado aqui, antes
+  // de iniciar(), pra não depender da ordem de avaliação de módulo (imports são içados).
+  process.env.LOWGAMETRY_MOCK_DUR_MS = '150'
+  motor = await iniciar(8799)
+}, 20000)
+afterAll(async () => { await motor.fechar() }, 20000)
 
 const base = 'http://127.0.0.1:8799'
 
@@ -46,7 +48,9 @@ it('POST /jobs cria job e GET /jobs/:id evolui até pronto', async () => {
   expect(zip.headers.get('content-type')).toBe('application/zip')
   const bytes = new Uint8Array(await zip.arrayBuffer())
   expect(String.fromCharCode(bytes[0], bytes[1])).toBe('PK') // assinatura de zip
-})
+  // timeout generoso: normalmente termina em ~250ms (dur=150), mas depende do relógio;
+  // margem pra não estourar sob carga no CI mesmo se a env não for aplicada.
+}, 20000)
 
 it('POST /jobs concorrente devolve 409', async () => {
   const mk = () => { const fd = new FormData(); fd.append('config', '{}'); return fetch(`${base}/jobs`, { method: 'POST', body: fd }) }
