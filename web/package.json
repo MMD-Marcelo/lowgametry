@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:mock": "vitest run ../mock-motor/server.test.mjs",
     "mock": "node ../mock-motor/server.mjs"
   },
   "dependencies": {
