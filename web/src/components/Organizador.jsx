@@ -5,10 +5,11 @@ import { alternar, mover, avisos } from '../lib/fotos.js'
 // Organizador: reordenar, incluir/excluir e ver nitidez antes de gerar. Recebe
 // as fotos ja importadas (com EXIF/nitidez lidos) e devolve, em onContinuar, a
 // lista pronta pra envio (paraEnvio: so incluidas, na ordem, com prefixo NNN_).
-export default function Organizador({ fotos: fotosIniciais, importar, onContinuar, onVoltar, onTrocar }) {
+export default function Organizador({ fotos: fotosIniciais, importar, onContinuar, onVoltar }) {
   const [fotos, setFotos] = useState(fotosIniciais)
   const [erro, setErro] = useState(null)
   const addRef = useRef(null)
+  const trocarRef = useRef(null)
   const alertas = avisos(fotos)
   const nSel = fotos.filter((f) => f.incluida).length
 
@@ -17,6 +18,19 @@ export default function Organizador({ fotos: fotosIniciais, importar, onContinua
     try {
       const novas = await importar(lista)
       setFotos((fs) => [...fs, ...novas])
+    } catch {
+      setErro('Não consegui ler essas imagens.')
+    }
+  }
+
+  // troca: substitui as fotos atuais pelas recém-escolhidas, aqui mesmo no
+  // organizador (antes o botão voltava pro início e descartava tudo).
+  const trocar = async (lista) => {
+    setErro(null)
+    try {
+      const novas = await importar(lista)
+      if (!novas.length) { setErro('Não consegui ler essas imagens.'); return }
+      setFotos(novas)
     } catch {
       setErro('Não consegui ler essas imagens.')
     }
@@ -59,9 +73,9 @@ export default function Organizador({ fotos: fotosIniciais, importar, onContinua
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <button onClick={onTrocar} className="flex min-h-[4.75rem] flex-col justify-center border border-linha px-3 py-2 text-left hover:border-primaria">
+        <button onClick={() => trocarRef.current?.click()} className="flex min-h-[4.75rem] flex-col justify-center border border-linha px-3 py-2 text-left hover:border-primaria">
           <div className="text-primaria">⇄ trocar fotos</div>
-          <div className="text-xs text-muted">substituir as fotos selecionadas</div>
+          <div className="text-xs text-muted">substituir por outras fotos</div>
         </button>
         <button onClick={() => addRef.current?.click()} className="flex min-h-[4.75rem] flex-col justify-center border border-linha px-3 py-2 text-left hover:border-primaria">
           <div className="text-primaria">⊕ adicionar mais</div>
@@ -80,6 +94,8 @@ export default function Organizador({ fotos: fotosIniciais, importar, onContinua
 
       <input ref={addRef} data-testid="input-adicionar" type="file" accept="image/*" multiple className="hidden"
         onChange={(e) => e.target.files?.length && adicionar(e.target.files)} />
+      <input ref={trocarRef} data-testid="input-trocar" type="file" accept="image/*" multiple className="hidden"
+        onChange={(e) => e.target.files?.length && trocar(e.target.files)} />
     </div>
   )
 }

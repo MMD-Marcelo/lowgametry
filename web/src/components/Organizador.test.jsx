@@ -12,10 +12,9 @@ function montar(props = {}) {
     foto({ nome: 'b.jpg', data: new Date(2021, 0, 2) }),
   ]
   const onContinuar = vi.fn()
-  const onTrocar = vi.fn()
   const importar = vi.fn(async () => [])
-  render(<Organizador fotos={fotos} importar={importar} onContinuar={onContinuar} onVoltar={() => {}} onTrocar={onTrocar} />)
-  return { onContinuar, onTrocar, importar }
+  render(<Organizador fotos={fotos} importar={importar} onContinuar={onContinuar} onVoltar={() => {}} />)
+  return { onContinuar, importar }
 }
 
 describe('Organizador', () => {
@@ -40,10 +39,15 @@ describe('Organizador', () => {
     expect(screen.getByText(/poucas fotos/i)).toBeInTheDocument()
   })
 
-  it('trocar fotos aciona onTrocar', () => {
-    const { onTrocar } = montar()
-    fireEvent.click(screen.getByRole('button', { name: /trocar fotos/i }))
-    expect(onTrocar).toHaveBeenCalled()
+  it('trocar fotos substitui a seleção pelas novas, sem voltar ao início', async () => {
+    const novas = [criarFoto({ nome: 'nova.jpg', blob: new Blob(['n']), url: 'blob:n' })]
+    const importar = vi.fn(async () => novas)
+    render(<Organizador
+      fotos={[foto({ nome: 'a.jpg' }), foto({ nome: 'b.jpg' })]}
+      importar={importar}
+      onContinuar={() => {}} onVoltar={() => {}} />)
+    fireEvent.change(screen.getByTestId('input-trocar'), { target: { files: [new File(['n'], 'nova.jpg')] } })
+    expect(await screen.findByText((_, el) => el?.textContent === '1 de 1 fotos selecionadas')).toBeInTheDocument()
   })
 
   it('desabilita "configurar modelo" quando nenhuma foto está selecionada', () => {
@@ -57,7 +61,7 @@ describe('Organizador', () => {
     render(<Organizador
       fotos={[foto({ nome: 'a.jpg' }), foto({ nome: 'b.jpg' })]}
       importar={importar}
-      onContinuar={() => {}} onVoltar={() => {}} onTrocar={() => {}} />)
+      onContinuar={() => {}} onVoltar={() => {}} />)
     const input = screen.getByTestId('input-adicionar')
     fireEvent.change(input, { target: { files: [new File(['n'], 'nova.jpg')] } })
     // o texto "3 de 3 fotos selecionadas" é composto por spans separados pros

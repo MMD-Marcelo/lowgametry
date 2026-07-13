@@ -171,7 +171,7 @@ export default function App() {
             <div className="text-xs text-muted tabular-nums">{Math.round(extraindo * 100)}%</div>
           </div>
         )}
-        {tela === 'organizar' && <Organizador fotos={fotos} importar={importarFotos} onContinuar={confirmarOrganizacao} onVoltar={() => setTela('inicio')} onTrocar={() => setTela('inicio')} />}
+        {tela === 'organizar' && <Organizador fotos={fotos} importar={importarFotos} onContinuar={confirmarOrganizacao} onVoltar={() => setTela('inicio')} />}
         {tela === 'config' && <ConfigForm config={config} setConfig={setConfig} nFotos={fotos.filter((f) => f.incluida).length} onGerar={iniciar} onVoltar={() => setTela('organizar')} />}
         {tela === 'progresso' && <Progresso status={status} onRecomecar={recomeçar} onAbortar={recomeçar} />}
         {tela === 'resultado' && <Resultado jobId={jobId} onRecomecar={recomeçar} />}
