@@ -84,7 +84,8 @@ const PNG_DEMO = Buffer.from(
 
 function progresso() {
   if (!atual || atual.estado === 'pronto') return
-  const dur = 4000
+  // 4s por padrão (progresso realista pro `npm run mock`); o teste encurta via env
+  const dur = Number(process.env.LOWGAMETRY_MOCK_DUR_MS) || 4000
   const t = Math.min(1, (Date.now() - atual.iniciado) / dur)
   atual.pct = Math.round(t * 100)
   atual.etapa = ETAPAS[Math.min(ETAPAS.length - 1, Math.floor(t * ETAPAS.length))]

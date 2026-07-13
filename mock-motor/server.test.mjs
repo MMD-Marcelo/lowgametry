@@ -1,4 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+// encurta a evolução do job (padrão de 4s é só pra UX do dev) pra não estourar o
+// timeout do teste sob carga no CI. Definido antes de iniciar() no beforeAll.
+process.env.LOWGAMETRY_MOCK_DUR_MS = '150'
 import { iniciar } from './server.mjs'
 
 let motor
