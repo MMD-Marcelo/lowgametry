@@ -1,6 +1,8 @@
 import { ETAPAS_ROTULO } from '../lib/fluxo.js'
 
-const RELEASES = 'https://github.com/MMD-Marcelo/lowgametry/releases'
+// download direto do zip do release mais recente (nome do asset fixado no
+// release.yml). /releases/latest/download/<asset> sempre resolve pro último.
+const MOTOR_DOWNLOAD = 'https://github.com/MMD-Marcelo/lowgametry/releases/latest/download/lowgametry-motor-windows-x64.zip'
 
 function textoConectado(info) {
   const partes = ['motor conectado']
@@ -25,7 +27,7 @@ export default function BarraStatus({ online, info }) {
         </span>
       )}
       {!online && (
-        <a href={RELEASES} target="_blank" rel="noreferrer"
+        <a href={MOTOR_DOWNLOAD} target="_blank" rel="noreferrer"
            className="border border-primaria/60 px-3 py-1 text-primaria hover:border-fosforo hover:text-fosforo hover:glow">
           [ baixar o motor ]
         </a>
